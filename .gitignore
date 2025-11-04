@@ -1,0 +1,34 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.ipynb_checkpoints
+.venv/
+venv/
+
+# Data artifacts
+data/processed/*.parquet
+data/processed/*.csv
+
+# Node/Next.js (handled in /web, but guard at root too)
+node_modules/
+.next/
+web/.next/
+web/node_modules/
+
+# Env files
+.env
+.env.*
+web/.env.local
+web/.env.production
+
+# Logs
+*.log
+logs/
+
+# Build outputs
+dist/
+build/
+

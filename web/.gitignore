@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+.pnp.cjs
+.pnp.loader.mjs
+
+# Testing
+/coverage
+
+# Next.js
+.next/
+out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.local
+.env*
