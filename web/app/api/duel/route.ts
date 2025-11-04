@@ -29,13 +29,28 @@ export async function GET() {
   const ratingIndex = new Map<number, (typeof ratings)[number]>();
   ratings.forEach((rating) => ratingIndex.set(rating.raceId, rating));
 
-  const merged = summaries.map((summary) => {
-    const rating = ratingIndex.get(summary.raceId);
-    return {
-      ...summary,
-      elo: rating?.elo ?? rating?.eloSeed ?? 1500,
-    };
-  });
+  const merged = summaries
+    .map((summary) => {
+      const rating = ratingIndex.get(summary.raceId);
+      if (!rating) {
+        return null;
+      }
+      return {
+        ...summary,
+        elo: rating.elo ?? rating.eloSeed ?? 1500,
+      };
+    })
+    .filter(Boolean) as Array<RaceSummary & { elo: number }>;
+
+  if (merged.length < 2) {
+    return NextResponse.json(
+      {
+        error:
+          "Not enough races with ratings to run a duel. Seed Supabase or include processed CSVs.",
+      },
+      { status: 503 }
+    );
+  }
 
   const [raceA, raceB] = pickTwo(merged);
 
