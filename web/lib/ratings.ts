@@ -27,28 +27,65 @@ const parseNumber = (value: string | null | undefined, fallback = 0) => {
 };
 
 export async function loadDuelSeeds(): Promise<DuelSeed[]> {
-  const csv = await fs.readFile(DUEL_SEED_CSV, "utf8");
-  const parsed = Papa.parse<DuelRow>(csv, {
-    header: true,
-    skipEmptyLines: true,
-  });
+  let csv: string | null = null;
 
-  if (parsed.errors.length) {
+  try {
+    csv = await fs.readFile(DUEL_SEED_CSV, "utf8");
+  } catch (error: any) {
+    if (error?.code !== "ENOENT") {
+      throw error;
+    }
+  }
+
+  if (csv) {
+    const parsed = Papa.parse<DuelRow>(csv, {
+      header: true,
+      skipEmptyLines: true,
+    });
+
+    if (parsed.errors.length) {
+      throw new Error(
+        `Failed to parse duel seed CSV: ${parsed.errors
+          .map((err) => err.message)
+          .join("; ")}`
+      );
+    }
+
+    return parsed.data.map((row) => ({
+      raceId: parseNumber(row.raceId, parseNumber(row.round) + parseNumber(row.season) * 1000),
+      season: parseNumber(row.season),
+      round: parseNumber(row.round),
+      raceName: row.race_name,
+      priorScore: parseNumber(row.prior_score),
+      eloSeed: parseNumber(row.elo_seed),
+      logitSeed: parseNumber(row.logit_seed),
+    }));
+  }
+
+  if (!supabase) {
     throw new Error(
-      `Failed to parse duel seed CSV: ${parsed.errors
-        .map((err) => err.message)
-        .join("; ")}`
+      "race_duel_seed.csv not found and Supabase is not configured. Provide processed duel seeds or Supabase credentials."
     );
   }
 
-  return parsed.data.map((row) => ({
-    raceId: parseNumber(row.raceId, parseNumber(row.round) + parseNumber(row.season) * 1000),
-    season: parseNumber(row.season),
-    round: parseNumber(row.round),
+  const { data, error } = await supabase
+    .from("race_ratings")
+    .select("race_id, season, round, race_name, prior_score, elo, logit_seed")
+    .order("season", { ascending: true })
+    .order("round", { ascending: true });
+
+  if (error) {
+    throw new Error(`Supabase race_ratings query failed: ${error.message}`);
+  }
+
+  return (data ?? []).map((row) => ({
+    raceId: Number(row.race_id),
+    season: row.season,
+    round: row.round,
     raceName: row.race_name,
-    priorScore: parseNumber(row.prior_score),
-    eloSeed: parseNumber(row.elo_seed),
-    logitSeed: parseNumber(row.logit_seed),
+    priorScore: Number(row.prior_score ?? 0),
+    eloSeed: Number(row.elo ?? 1500),
+    logitSeed: Number(row.logit_seed ?? 0),
   }));
 }
 
