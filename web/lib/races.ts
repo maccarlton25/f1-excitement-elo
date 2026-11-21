@@ -41,8 +41,8 @@ export const getRaceSummaries = cache(async (): Promise<RaceSummary[]> => {
 
   try {
     csvContent = await fs.readFile(RACE_SUMMARIES_CSV, "utf8");
-  } catch (error: any) {
-    if (error?.code !== "ENOENT") {
+  } catch (error: unknown) {
+    if ((error as NodeJS.ErrnoException)?.code !== "ENOENT") {
       throw error;
     }
   }

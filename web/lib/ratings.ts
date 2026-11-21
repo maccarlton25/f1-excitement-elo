@@ -31,8 +31,8 @@ export async function loadDuelSeeds(): Promise<DuelSeed[]> {
 
   try {
     csv = await fs.readFile(DUEL_SEED_CSV, "utf8");
-  } catch (error: any) {
-    if (error?.code !== "ENOENT") {
+  } catch (error: unknown) {
+    if ((error as NodeJS.ErrnoException)?.code !== "ENOENT") {
       throw error;
     }
   }

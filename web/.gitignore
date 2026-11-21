@@ -17,3 +17,4 @@ out/
 .DS_Store
 *.local
 .env*
+*.tsbuildinfo
